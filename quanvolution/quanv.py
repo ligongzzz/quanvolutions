@@ -317,8 +317,10 @@ class TorchQuanvLayer(nn.Module):
         """
 
         input_patches = torch.nn.functional.unfold(inputs, kernel_size=self.kernel_size, stride=self.stride)
+        s = input_patches.shape
 
-        convolved_patches = torch.stack([self.qnode(inputs=x) for x in torch.unbind(input_patches, dim=-1)])
+        input_patches = input_patches.transpose(1, 2).reshape(s[0]*s[2], -1)
+        convolved_patches = self.qnode(inputs=input_patches).view(s[0], s[2], -1).transpose(1, 2)
 
         out_shape = (inputs.shape[0], self.out_channels // in_channels, (inputs.shape[2] - self.kernel_size[0]) // self.stride + 1,
                      (inputs.shape[3] - self.kernel_size[1]) // self.stride + 1)
